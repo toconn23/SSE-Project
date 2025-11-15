@@ -1,0 +1,409 @@
+{
+  "totalRoutes": 4,
+  "routesWithSinks": 6,
+  "routesWithoutAuth": 4,
+  "vulnerableRoutes": [
+    {
+      "route": "data\\vuln-app\\app\\api\\tasks\\route.ts",
+      "methods": [
+        "POST"
+      ],
+      "vulnerability": "Missing Authentication",
+      "severity": "high",
+      "description": "POST handler performs database writes without authentication checks"
+    },
+    {
+      "route": "data\\vuln-app\\app\\api\\tasks\\[id]\\route.ts",
+      "methods": [
+        "DELETE"
+      ],
+      "vulnerability": "Missing Authentication",
+      "severity": "high",
+      "description": "DELETE handler performs database writes without authentication checks"
+    },
+    {
+      "route": "data\\vuln-app\\app\\api\\tasks\\user\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "vulnerability": "Missing Role Check",
+      "severity": "high",
+      "description": "GET handler reads user table without role-based authorization"
+    }
+  ],
+  "routes": [
+    {
+      "filePath": "data\\vuln-app\\app\\api\\tasks\\route.ts",
+      "method": [
+        "GET",
+        "POST"
+      ],
+      "sinks": [
+        {
+          "type": "database_read",
+          "location": "Line 21",
+          "callPath": [
+            "db.task.findMany"
+          ]
+        },
+        {
+          "type": "database_write",
+          "location": "Line 29",
+          "callPath": [
+            "db.task.create"
+          ]
+        }
+      ],
+      "hasAuthentication": true,
+      "authorizationChecks": [],
+      "parameters": [
+        {
+          "name": "body",
+          "source": "body",
+          "containsObjectId": false
+        },
+        {
+          "name": "body",
+          "source": "body",
+          "containsObjectId": false
+        },
+        {
+          "name": "body",
+          "source": "body",
+          "containsObjectId": true
+        }
+      ],
+      "middleware": [],
+      "methodDetails": [
+        {
+          "method": "GET",
+          "sinks": [
+            {
+              "type": "database_read",
+              "location": "Line 21",
+              "callPath": [
+                "db.task.findMany"
+              ],
+              "isProtected": false
+            }
+          ],
+          "hasAuthentication": false,
+          "authorizationChecks": []
+        },
+        {
+          "method": "POST",
+          "sinks": [
+            {
+              "type": "database_write",
+              "location": "Line 29",
+              "callPath": [
+                "db.task.create"
+              ],
+              "isProtected": false
+            }
+          ],
+          "hasAuthentication": false,
+          "authorizationChecks": []
+        }
+      ]
+    },
+    {
+      "filePath": "data\\vuln-app\\app\\api\\debug\\route.ts",
+      "method": [
+        "DELETE"
+      ],
+      "sinks": [
+        {
+          "type": "database_write",
+          "location": "Line 38",
+          "callPath": [
+            "deleteUserData"
+          ]
+        }
+      ],
+      "hasAuthentication": true,
+      "authorizationChecks": [
+        {
+          "type": "role_check",
+          "location": "Line 14",
+          "details": "function checkSuperuser(userRole: string) {\r\n  //custom role from config\r\n  return userRole === \"sup"
+        },
+        {
+          "type": "role_check",
+          "location": "Line 16",
+          "details": "return userRole === \"superuser\" || userRole === \"moderator\";"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 21",
+          "details": "const session = await getServerSession();"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 23",
+          "details": "if (!session) {\r\n    return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });\r\n  }"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 31",
+          "details": "if (!checkSuperuser(session.user.role)) {\r\n    return NextResponse.json({ error: \"Forbidden\" }, { st"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "cookies",
+          "source": "cookie",
+          "containsObjectId": false
+        }
+      ],
+      "middleware": [],
+      "methodDetails": [
+        {
+          "method": "DELETE",
+          "sinks": [
+            {
+              "type": "database_write",
+              "location": "Line 38",
+              "callPath": [
+                "deleteUserData"
+              ],
+              "isProtected": true
+            }
+          ],
+          "hasAuthentication": true,
+          "authorizationChecks": [
+            {
+              "type": "session_check",
+              "location": "Line 21",
+              "details": "const session = await getServerSession();"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 23",
+              "details": "if (!session) {\r\n    return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });\r\n  }"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 31",
+              "details": "if (!checkSuperuser(session.user.role)) {\r\n    return NextResponse.json({ error: \"Forbidden\" }, { st"
+            },
+            {
+              "type": "role_check",
+              "location": "Line 14",
+              "details": "{\r\n  //custom role from config\r\n  return userRole === \"superuser\" || userRole === \"moderator\";\r\n}"
+            },
+            {
+              "type": "role_check",
+              "location": "Line 16",
+              "details": "return userRole === \"superuser\" || userRole === \"moderator\";"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "filePath": "data\\vuln-app\\app\\api\\tasks\\[id]\\route.ts",
+      "method": [
+        "PUT",
+        "DELETE"
+      ],
+      "sinks": [
+        {
+          "type": "database_read",
+          "location": "Line 45",
+          "callPath": [
+            "db.task.findUnique"
+          ]
+        },
+        {
+          "type": "database_write",
+          "location": "Line 59",
+          "callPath": [
+            "db.task.update"
+          ]
+        },
+        {
+          "type": "database_read",
+          "location": "Line 75",
+          "callPath": [
+            "db.task.findUnique"
+          ]
+        },
+        {
+          "type": "database_write",
+          "location": "Line 80",
+          "callPath": [
+            "db.task.delete"
+          ]
+        }
+      ],
+      "hasAuthentication": true,
+      "authorizationChecks": [
+        {
+          "type": "session_check",
+          "location": "Line 37",
+          "details": "const sessionUserId = getSessionUserId(request);"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 38",
+          "details": "if (!sessionUserId) {\n    return NextResponse.json(\n      { error: \"Unauthorized - Please log in\" },"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 50",
+          "details": "if (task.userId !== sessionUserId) {\n    return NextResponse.json(\n      { error: \"Forbidden - You c"
+        }
+      ],
+      "parameters": [],
+      "middleware": [],
+      "methodDetails": [
+        {
+          "method": "PUT",
+          "sinks": [
+            {
+              "type": "database_read",
+              "location": "Line 45",
+              "callPath": [
+                "db.task.findUnique"
+              ],
+              "isProtected": true
+            },
+            {
+              "type": "database_write",
+              "location": "Line 59",
+              "callPath": [
+                "db.task.update"
+              ],
+              "isProtected": true
+            }
+          ],
+          "hasAuthentication": true,
+          "authorizationChecks": [
+            {
+              "type": "session_check",
+              "location": "Line 37",
+              "details": "const sessionUserId = getSessionUserId(request);"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 38",
+              "details": "if (!sessionUserId) {\n    return NextResponse.json(\n      { error: \"Unauthorized - Please log in\" },"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 50",
+              "details": "if (task.userId !== sessionUserId) {\n    return NextResponse.json(\n      { error: \"Forbidden - You c"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "sinks": [
+            {
+              "type": "database_read",
+              "location": "Line 75",
+              "callPath": [
+                "db.task.findUnique"
+              ],
+              "isProtected": false
+            },
+            {
+              "type": "database_write",
+              "location": "Line 80",
+              "callPath": [
+                "db.task.delete"
+              ],
+              "isProtected": false
+            }
+          ],
+          "hasAuthentication": false,
+          "authorizationChecks": []
+        }
+      ]
+    },
+    {
+      "filePath": "data\\vuln-app\\app\\api\\tasks\\user\\route.ts",
+      "method": [
+        "GET"
+      ],
+      "sinks": [
+        {
+          "type": "user_table_read",
+          "location": "Line 36",
+          "callPath": [
+            "db.user.findMany"
+          ]
+        }
+      ],
+      "hasAuthentication": true,
+      "authorizationChecks": [
+        {
+          "type": "ownership_check",
+          "location": "Line 4",
+          "details": "const db = {\n  task: {\n    findMany: (filter?: any) => {\n      if (filter && filter.userId) {\n      "
+        },
+        {
+          "type": "ownership_check",
+          "location": "Line 5",
+          "details": "task: {\n    findMany: (filter?: any) => {\n      if (filter && filter.userId) {\n        return tasks."
+        },
+        {
+          "type": "ownership_check",
+          "location": "Line 6",
+          "details": "findMany: (filter?: any) => {\n      if (filter && filter.userId) {\n        return tasks.filter((t) ="
+        },
+        {
+          "type": "ownership_check",
+          "location": "Line 7",
+          "details": "if (filter && filter.userId) {\n        return tasks.filter((t) => t.userId === filter.userId);\n     "
+        },
+        {
+          "type": "ownership_check",
+          "location": "Line 8",
+          "details": "return tasks.filter((t) => t.userId === filter.userId);"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 17",
+          "details": "const sessionToken = request.headers.get(\"authorization\");"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 19",
+          "details": "if (!userId || !sessionToken) {\n    return null;\n  }"
+        }
+      ],
+      "parameters": [],
+      "middleware": [],
+      "methodDetails": [
+        {
+          "method": "GET",
+          "sinks": [
+            {
+              "type": "user_table_read",
+              "location": "Line 36",
+              "callPath": [
+                "db.user.findMany"
+              ],
+              "isProtected": false
+            }
+          ],
+          "hasAuthentication": false,
+          "authorizationChecks": [
+            {
+              "type": "session_check",
+              "location": "Line 17",
+              "details": "const sessionToken = request.headers.get(\"authorization\");"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 19",
+              "details": "if (!userId || !sessionToken) {\n    return null;\n  }"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
