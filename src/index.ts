@@ -2,6 +2,7 @@
 import { RouteDiscovery } from "./routeDiscovery";
 import { Analyzer } from "./analyzer";
 import { Reporter } from "./reporter";
+import { Fuzzer } from "./fuzzer";
 import { RouteInfo, SecurityConfig } from "./types";
 import * as path from "path";
 import * as fs from "fs";
@@ -9,10 +10,20 @@ import * as fs from "fs";
 async function main() {
   const args = process.argv.slice(2);
   if (!args[0]) {
-    console.error("Provide a target directory");
+    console.error(
+      "Usage: ts-node src/index.ts <target-directory> [--fuzz] [--base-url <url>]"
+    );
+    console.error(
+      "Example: ts-node src/index.ts data/vuln-app --fuzz --base-url http://localhost:3000"
+    );
     process.exit(1);
   }
+
   const targetDir = args[0];
+  const shouldFuzz = args.includes("--fuzz");
+  const baseUrlIndex = args.indexOf("--base-url");
+  const baseUrl =
+    baseUrlIndex !== -1 ? args[baseUrlIndex + 1] : "http://localhost:3000";
 
   console.log(`Analyzing: ${targetDir}\n`);
 
@@ -61,21 +72,56 @@ async function main() {
 
     console.log(`\nAnalyzed ${routes.length} routes successfully\n`);
 
-    //TODO: Targeted Fuzzing and change severity based on result
-    console.log("TODO: Targeted Fuzzing...");
-
-    //generate and display report
-    console.log("Generating security report...");
+    //generate static analysis report
     const reporter = new Reporter();
-    const report = reporter.generateReport(routes);
+    const analysisReport = reporter.generateReport(routes);
 
-    reporter.printReport(report);
+    //save static analysis report
+    const securityReportPath = path.join(targetDir, "security-report.json");
+    fs.writeFileSync(
+      securityReportPath,
+      JSON.stringify(analysisReport, null, 2)
+    );
+    console.log(`Security report saved to: ${securityReportPath}`);
 
-    //create report
-    const outputPath = path.join(targetDir, "security-report.json");
-    reporter.saveReportToFile(report, outputPath);
+    //run fuzzing if requested
+    let fuzzingReport;
+    if (shouldFuzz) {
+      console.log("Running fuzzer...");
+      const fuzzer = new Fuzzer(baseUrl, config);
 
-    console.log("\nAnalysis complete");
+      const missingAuthReport = await fuzzer.fuzzMissingAuthentication(
+        analysisReport
+      );
+      const privEscReport = await fuzzer.fuzzPrivilegeEscalation(
+        analysisReport
+      );
+
+      fuzzingReport = reporter.generateFuzzingReport(
+        missingAuthReport,
+        privEscReport
+      );
+
+      //save fuzzing report
+      const fuzzingReportPath = path.join(targetDir, "fuzzing-report.json");
+      fs.writeFileSync(
+        fuzzingReportPath,
+        JSON.stringify(fuzzingReport, null, 2)
+      );
+      console.log(`Fuzzing report saved to: ${fuzzingReportPath}`);
+    }
+
+    //generate and display final report
+    const finalReport = reporter.generateFinalReport(
+      analysisReport,
+      fuzzingReport
+    );
+    reporter.printFinalReport(finalReport);
+
+    //save final report
+    const finalOutputPath = path.join(targetDir, "final-report.json");
+    reporter.saveFinalReport(finalReport, finalOutputPath);
+    console.log(`Final report saved to: ${finalOutputPath}`);
   } catch (error) {
     console.error("Analysis failed:", error);
     process.exit(1);

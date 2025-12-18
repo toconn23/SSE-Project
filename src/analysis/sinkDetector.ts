@@ -1,12 +1,14 @@
 import { Node, CallExpression } from "ts-morph";
-import { Sink } from "../types";
+import { Sink, SecurityConfig } from "../types";
 import { ASTUtils } from "./astUtils";
 
 export class SinkDetector {
   private astUtils: ASTUtils;
+  private config: SecurityConfig;
 
-  constructor(astUtils: ASTUtils) {
+  constructor(astUtils: ASTUtils, config: SecurityConfig = {}) {
     this.astUtils = astUtils;
+    this.config = config;
   }
 
   detectSinks(node: Node): Sink[] {
@@ -92,12 +94,6 @@ export class SinkDetector {
               location: `Line ${line}`,
               callPath: [calleeText],
             });
-          } else {
-            sinks.push({
-              type: "database_read",
-              location: `Line ${line}`,
-              callPath: [calleeText],
-            });
           }
         }
 
@@ -118,6 +114,24 @@ export class SinkDetector {
             location: `Line ${line}`,
             callPath: [calleeText],
           });
+        }
+
+        //check custom sinks
+        if (this.config.customSinks) {
+          for (const customSink of this.config.customSinks) {
+            if (
+              customSink.patterns.some((pattern) =>
+                calleeText.includes(pattern)
+              )
+            ) {
+              sinks.push({
+                type: customSink.name,
+                location: `Line ${line}`,
+                callPath: [calleeText],
+                customSeverity: customSink.severity,
+              });
+            }
+          }
         }
       }
     });

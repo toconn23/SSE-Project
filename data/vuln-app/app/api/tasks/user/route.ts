@@ -1,39 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tasks } from "../route";
+import { getServerSession } from "../../../../lib/session";
+
+// Mock user database
+const users = [
+  {
+    id: "user-123",
+    name: "Regular User",
+    email: "user@example.com",
+    role: "user",
+  },
+  {
+    id: "user-456",
+    name: "Another User",
+    email: "another@example.com",
+    role: "user",
+  },
+  {
+    id: "admin-user-id",
+    name: "Admin User",
+    email: "admin@example.com",
+    role: "admin",
+  },
+];
 
 const db = {
-  task: {
-    findMany: (filter?: any) => {
-      if (filter && filter.userId) {
-        return tasks.filter((t) => t.userId === filter.userId);
-      }
-      return tasks;
-    },
+  user: {
+    findMany: () => users,
   },
 };
 
-function getAuthenticatedUser(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
-  const sessionToken = request.headers.get("authorization");
+export async function GET(request: NextRequest) {
+  const session = getServerSession(request);
 
-  if (!userId || !sessionToken) {
-    return null;
+  if (!session) {
+    return NextResponse.json(
+      { error: "Unauthorized - Authentication required" },
+      { status: 401 }
+    );
   }
 
-  return { userId, authenticated: true };
-}
+  // VULNERABILITY: Non-admin users can read entire user table
+  // Should check: if (session.role !== "admin") { return 403 }
+  const allUsers = db.user.findMany();
 
-export async function GET(request: NextRequest) {
-  const user = getAuthenticatedUser(request);
-
-  // if (!user) {
-  //   return NextResponse.json(
-  //     { error: "Unauthorized - Authentication required" },
-  //     { status: 401 }
-  //   );
-  // }
-
-  const userTasks = db.user.findMany({ userId: user.userId });
-
-  return NextResponse.json(userTasks);
+  return NextResponse.json(allUsers);
 }

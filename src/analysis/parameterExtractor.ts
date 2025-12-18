@@ -27,12 +27,23 @@ export class ParameterExtractor {
         const hasId = props.some((p) => p === "id" || /[A-Za-z]+Id$/.test(p));
 
         if (props.includes("body")) {
-          seen.add("body");
-          parameters.push({
-            name: "body",
-            source: "body",
-            containsObjectId: hasId,
-          });
+          const bodyIndex = props.indexOf("body");
+          //Extract the property name after the body
+          let propertyName = null;
+          if (props[bodyIndex + 1]) {
+            propertyName = props[bodyIndex + 1];
+          }
+          const paramKey = `body.${propertyName}`;
+          if (!seen.has(paramKey)) {
+            if (propertyName) {
+              seen.add(paramKey);
+            }
+            parameters.push({
+              name: propertyName ?? "",
+              source: "body",
+              containsObjectId: hasId,
+            });
+          }
         }
 
         if (props.includes("query")) {
@@ -51,33 +62,6 @@ export class ParameterExtractor {
             source: "params",
             containsObjectId: true,
           });
-        }
-
-        if (props.includes("cookies")) {
-          seen.add("cookies");
-          parameters.push({
-            name: "cookies",
-            source: "cookie",
-            containsObjectId: hasId,
-          });
-        }
-      }
-
-      //check for cookies function
-      if (Node.isCallExpression(node)) {
-        const expression = node.getExpression();
-        if (
-          Node.isIdentifier(expression) &&
-          expression.getText() === "cookies"
-        ) {
-          if (!seen.has("cookies")) {
-            seen.add("cookies");
-            parameters.push({
-              name: "cookies",
-              source: "cookie",
-              containsObjectId: false,
-            });
-          }
         }
       }
     });

@@ -1,0 +1,92 @@
+{
+  "totalTests": 3,
+  "vulnerabilitiesConfirmed": 1,
+  "vulnerabilitiesRejected": 2,
+  "results": [
+    {
+      "route": "/api/tasks",
+      "method": "POST",
+      "vulnerability": "missing_authentication",
+      "request": {
+        "url": "http://localhost:3000/api/tasks",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "title": "in cras elit quam ut",
+          "description": "$R!",
+          "userId": 5
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "id": 3,
+          "title": "in cras elit quam ut",
+          "description": "$R!",
+          "userId": 5,
+          "completed": false
+        }
+      },
+      "exploitable": true,
+      "description": "Successfully accessed POST /api/tasks without authentication. Response: 201"
+    },
+    {
+      "route": "/api/tasks/user-safe",
+      "method": "GET",
+      "vulnerability": "privilege_escalation",
+      "request": {
+        "url": "http://localhost:3000/api/tasks/user-safe",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json",
+          "Cookie": "next-auth.session-token=valid-session-token-123"
+        }
+      },
+      "response": {
+        "status": 500
+      },
+      "exploitable": false,
+      "description": "Non-admin user was denied access to user table at GET /api/tasks/user-safe. Status: 500"
+    },
+    {
+      "route": "/api/tasks/user",
+      "method": "GET",
+      "vulnerability": "privilege_escalation",
+      "request": {
+        "url": "http://localhost:3000/api/tasks/user",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json",
+          "Cookie": "next-auth.session-token=valid-session-token-123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": [
+          {
+            "id": "user-123",
+            "name": "Regular User",
+            "email": "user@example.com",
+            "role": "user"
+          },
+          {
+            "id": "user-456",
+            "name": "Another User",
+            "email": "another@example.com",
+            "role": "user"
+          },
+          {
+            "id": "admin-user-id",
+            "name": "Admin User",
+            "email": "admin@example.com",
+            "role": "admin"
+          }
+        ]
+      },
+      "exploitable": false,
+      "description": "Request succeeded but no sensitive user data found in response at GET /api/tasks/user. Status: 200"
+    }
+  ]
+}

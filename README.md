@@ -1,20 +1,9 @@
 # Framework-Aware Detection of Authorization Bypasses in Next.js APIs
 
-## Progress
-
-### What is done
-
-Currently, I have implemented the static analysis for routes and reporting. Currently, the analysis only goes at most 1 function outside of the route method, so if authorization checks or sinks are located 2 functions away, it will not detect. Additionally, the function must be within the same file. I aim to add support for custom function depth navigation and support for navigating through functions imported as described in the proposal.
-
-### What needs to be done
-
-The fuzzing needs to be implemented. Once the code is complete, I will evaluate my tool on public github repositories.
-
 ## Installation
 
 ```bash
 npm install
-npm run build
 ```
 
 ## Usage
@@ -25,14 +14,39 @@ Analyze a Next.js project:
 npm run dev /path/to/your/nextjs/project
 ```
 
-### Optional: Custom Role Configuration
+Then, run the index script in one of the following ways
 
-Create a `security-config.json` file in your project root to specify custom authorization roles:
+```bash
+#static analysis only
+npx ts-node src/index.ts data/vuln-app
+
+#static analysis + fuzzing
+npx ts-node src/index.ts data/vuln-app --fuzz
+
+#static analysis + fuzzing with custom URL
+npx ts-node src/index.ts data/vuln-app --fuzz --base-url http://localhost:4000
+```
+
+### Optional: Security Configuration
+
+Create a `security-config.json` file in your project root to customize the analyzer:
 
 ```json
 {
-  "customRoles": ["moderator", "superuser", "owner"]
+  "customRoles": ["moderator", "superuser", "owner"],
+  "sessionTokens": {
+    "user": "valid-session-token-123",
+    "admin": "admin-session-token-456"
+  },
+  "customSinks": [
+    {
+      "name": "payment_processing",
+      "patterns": ["processPayment", "chargeCard", "refund"],
+      "severity": "high",
+      "description": "Payment processing operations"
+    }
+  ]
 }
 ```
 
-This helps the analyzer detect project-specific role checks in addition to standard keywords like "admin" and "role"
+This helps the analyzer detect project-specific role checks and custom sinks in addition to standard keywords. Additionally, the sessionTokens are needed for fuzzing protected routes as a logged in user.

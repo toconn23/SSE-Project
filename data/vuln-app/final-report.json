@@ -1,0 +1,55 @@
+{
+  "timestamp": "2025-12-18T06:12:34.376Z",
+  "summary": {
+    "totalRoutes": 5,
+    "totalVulnerabilities": 4,
+    "confirmedVulnerabilities": 0,
+    "unconfirmedVulnerabilities": 4,
+    "criticalCount": 0,
+    "highCount": 4,
+    "mediumCount": 0,
+    "lowCount": 0
+  },
+  "findings": [
+    {
+      "id": 1,
+      "route": "data\\vuln-app\\app\\api\\tasks\\route.ts",
+      "method": "POST",
+      "vulnerability": "Missing Authentication",
+      "severity": "high",
+      "confirmed": false,
+      "description": "POST handler performs database writes without authentication checks",
+      "fix": "Add authentication check to verify user identity before processing requests."
+    },
+    {
+      "id": 2,
+      "route": "data\\vuln-app\\app\\api\\tasks\\[id]\\route.ts",
+      "method": "DELETE",
+      "vulnerability": "Missing Authentication",
+      "severity": "high",
+      "confirmed": false,
+      "description": "DELETE handler performs database writes without authentication checks",
+      "fix": "Add authentication check to verify user identity before processing requests."
+    },
+    {
+      "id": 3,
+      "route": "data\\vuln-app\\app\\api\\tasks\\user-safe\\route.ts",
+      "method": "GET",
+      "vulnerability": "Missing Role Check",
+      "severity": "high",
+      "confirmed": false,
+      "description": "GET handler reads user table without role-based authorization",
+      "fix": "Implement role-based access control and verify user roles before allowing access to sensitive data or operations."
+    },
+    {
+      "id": 4,
+      "route": "data\\vuln-app\\app\\api\\tasks\\user\\route.ts",
+      "method": "GET",
+      "vulnerability": "Missing Role Check",
+      "severity": "high",
+      "confirmed": false,
+      "description": "GET handler reads user table without role-based authorization",
+      "fix": "Implement role-based access control and verify user roles before allowing access to sensitive data or operations."
+    }
+  ]
+}

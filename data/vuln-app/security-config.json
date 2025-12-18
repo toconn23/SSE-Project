@@ -1,3 +1,21 @@
 {
-  "customRoles": ["moderator", "superuser", "owner"]
+  "customRoles": ["moderator", "superuser", "owner"],
+  "sessionTokens": {
+    "user": "valid-session-token-123",
+    "admin": "admin-session-token-456"
+  },
+  "customSinks": [
+    {
+      "name": "payment_processing",
+      "patterns": ["processPayment", "chargeCard", "refund"],
+      "severity": "high",
+      "description": "Payment processing operations that require authentication"
+    },
+    {
+      "name": "email_sending",
+      "patterns": ["sendEmail", "sendNotification"],
+      "severity": "medium",
+      "description": "Email and notification operations"
+    }
+  ]
 }

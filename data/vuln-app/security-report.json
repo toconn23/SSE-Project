@@ -1,7 +1,7 @@
 {
-  "totalRoutes": 4,
+  "totalRoutes": 5,
   "routesWithSinks": 6,
-  "routesWithoutAuth": 4,
+  "routesWithoutAuth": 2,
   "vulnerableRoutes": [
     {
       "route": "data\\vuln-app\\app\\api\\tasks\\route.ts",
@@ -22,6 +22,15 @@
       "description": "DELETE handler performs database writes without authentication checks"
     },
     {
+      "route": "data\\vuln-app\\app\\api\\tasks\\user-safe\\route.ts",
+      "methods": [
+        "GET"
+      ],
+      "vulnerability": "Missing Role Check",
+      "severity": "high",
+      "description": "GET handler reads user table without role-based authorization"
+    },
+    {
       "route": "data\\vuln-app\\app\\api\\tasks\\user\\route.ts",
       "methods": [
         "GET"
@@ -40,13 +49,6 @@
       ],
       "sinks": [
         {
-          "type": "database_read",
-          "location": "Line 21",
-          "callPath": [
-            "db.task.findMany"
-          ]
-        },
-        {
           "type": "database_write",
           "location": "Line 29",
           "callPath": [
@@ -58,17 +60,17 @@
       "authorizationChecks": [],
       "parameters": [
         {
-          "name": "body",
+          "name": "title",
           "source": "body",
           "containsObjectId": false
         },
         {
-          "name": "body",
+          "name": "description",
           "source": "body",
           "containsObjectId": false
         },
         {
-          "name": "body",
+          "name": "userId",
           "source": "body",
           "containsObjectId": true
         }
@@ -77,17 +79,8 @@
       "methodDetails": [
         {
           "method": "GET",
-          "sinks": [
-            {
-              "type": "database_read",
-              "location": "Line 21",
-              "callPath": [
-                "db.task.findMany"
-              ],
-              "isProtected": false
-            }
-          ],
-          "hasAuthentication": false,
+          "sinks": [],
+          "hasAuthentication": true,
           "authorizationChecks": []
         },
         {
@@ -149,13 +142,7 @@
           "details": "if (!checkSuperuser(session.user.role)) {\r\n    return NextResponse.json({ error: \"Forbidden\" }, { st"
         }
       ],
-      "parameters": [
-        {
-          "name": "cookies",
-          "source": "cookie",
-          "containsObjectId": false
-        }
-      ],
+      "parameters": [],
       "middleware": [],
       "methodDetails": [
         {
@@ -209,24 +196,10 @@
       ],
       "sinks": [
         {
-          "type": "database_read",
-          "location": "Line 45",
-          "callPath": [
-            "db.task.findUnique"
-          ]
-        },
-        {
           "type": "database_write",
           "location": "Line 59",
           "callPath": [
             "db.task.update"
-          ]
-        },
-        {
-          "type": "database_read",
-          "location": "Line 75",
-          "callPath": [
-            "db.task.findUnique"
           ]
         },
         {
@@ -247,12 +220,12 @@
         {
           "type": "session_check",
           "location": "Line 38",
-          "details": "if (!sessionUserId) {\n    return NextResponse.json(\n      { error: \"Unauthorized - Please log in\" },"
+          "details": "if (!sessionUserId) {\r\n    return NextResponse.json(\r\n      { error: \"Unauthorized - Please log in\" "
         },
         {
           "type": "session_check",
           "location": "Line 50",
-          "details": "if (task.userId !== sessionUserId) {\n    return NextResponse.json(\n      { error: \"Forbidden - You c"
+          "details": "if (task.userId !== sessionUserId) {\r\n    return NextResponse.json(\r\n      { error: \"Forbidden - You"
         }
       ],
       "parameters": [],
@@ -261,14 +234,6 @@
         {
           "method": "PUT",
           "sinks": [
-            {
-              "type": "database_read",
-              "location": "Line 45",
-              "callPath": [
-                "db.task.findUnique"
-              ],
-              "isProtected": true
-            },
             {
               "type": "database_write",
               "location": "Line 59",
@@ -288,26 +253,18 @@
             {
               "type": "session_check",
               "location": "Line 38",
-              "details": "if (!sessionUserId) {\n    return NextResponse.json(\n      { error: \"Unauthorized - Please log in\" },"
+              "details": "if (!sessionUserId) {\r\n    return NextResponse.json(\r\n      { error: \"Unauthorized - Please log in\" "
             },
             {
               "type": "session_check",
               "location": "Line 50",
-              "details": "if (task.userId !== sessionUserId) {\n    return NextResponse.json(\n      { error: \"Forbidden - You c"
+              "details": "if (task.userId !== sessionUserId) {\r\n    return NextResponse.json(\r\n      { error: \"Forbidden - You"
             }
           ]
         },
         {
           "method": "DELETE",
           "sinks": [
-            {
-              "type": "database_read",
-              "location": "Line 75",
-              "callPath": [
-                "db.task.findUnique"
-              ],
-              "isProtected": false
-            },
             {
               "type": "database_write",
               "location": "Line 80",
@@ -323,55 +280,45 @@
       ]
     },
     {
-      "filePath": "data\\vuln-app\\app\\api\\tasks\\user\\route.ts",
+      "filePath": "data\\vuln-app\\app\\api\\tasks\\user-safe\\route.ts",
       "method": [
         "GET"
       ],
       "sinks": [
         {
           "type": "user_table_read",
-          "location": "Line 36",
+          "location": "Line 24",
           "callPath": [
-            "db.user.findMany"
+            "userQuery.findMany"
           ]
         }
       ],
       "hasAuthentication": true,
       "authorizationChecks": [
         {
-          "type": "ownership_check",
-          "location": "Line 4",
-          "details": "const db = {\n  task: {\n    findMany: (filter?: any) => {\n      if (filter && filter.userId) {\n      "
+          "type": "session_check",
+          "location": "Line 2",
+          "details": "import { getServerSession } from \"../../../../lib/session\";"
         },
         {
-          "type": "ownership_check",
-          "location": "Line 5",
-          "details": "task: {\n    findMany: (filter?: any) => {\n      if (filter && filter.userId) {\n        return tasks."
+          "type": "session_check",
+          "location": "Line 12",
+          "details": "const session = getServerSession(\r\n    request,\r\n    securityConfig.sessionTokens.user\r\n  );"
         },
         {
-          "type": "ownership_check",
-          "location": "Line 6",
-          "details": "findMany: (filter?: any) => {\n      if (filter && filter.userId) {\n        return tasks.filter((t) ="
-        },
-        {
-          "type": "ownership_check",
-          "location": "Line 7",
-          "details": "if (filter && filter.userId) {\n        return tasks.filter((t) => t.userId === filter.userId);\n     "
-        },
-        {
-          "type": "ownership_check",
-          "location": "Line 8",
-          "details": "return tasks.filter((t) => t.userId === filter.userId);"
+          "type": "session_check",
+          "location": "Line 14",
+          "details": "securityConfig.sessionTokens.user"
         },
         {
           "type": "session_check",
           "location": "Line 17",
-          "details": "const sessionToken = request.headers.get(\"authorization\");"
+          "details": "if (!session) {\r\n    return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });\r\n  }"
         },
         {
           "type": "session_check",
-          "location": "Line 19",
-          "details": "if (!userId || !sessionToken) {\n    return null;\n  }"
+          "location": "Line 49",
+          "details": "session.user.role !== \"admin\""
         }
       ],
       "parameters": [],
@@ -382,24 +329,97 @@
           "sinks": [
             {
               "type": "user_table_read",
-              "location": "Line 36",
+              "location": "Line 24",
               "callPath": [
-                "db.user.findMany"
+                "userQuery.findMany"
               ],
-              "isProtected": false
+              "isProtected": true
             }
           ],
-          "hasAuthentication": false,
+          "hasAuthentication": true,
           "authorizationChecks": [
             {
               "type": "session_check",
-              "location": "Line 17",
-              "details": "const sessionToken = request.headers.get(\"authorization\");"
+              "location": "Line 12",
+              "details": "const session = getServerSession(\r\n    request,\r\n    securityConfig.sessionTokens.user\r\n  );"
             },
             {
               "type": "session_check",
-              "location": "Line 19",
-              "details": "if (!userId || !sessionToken) {\n    return null;\n  }"
+              "location": "Line 14",
+              "details": "securityConfig.sessionTokens.user"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 17",
+              "details": "if (!session) {\r\n    return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });\r\n  }"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 49",
+              "details": "session.user.role !== \"admin\""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "filePath": "data\\vuln-app\\app\\api\\tasks\\user\\route.ts",
+      "method": [
+        "GET"
+      ],
+      "sinks": [
+        {
+          "type": "user_table_read",
+          "location": "Line 44",
+          "callPath": [
+            "db.user.findMany"
+          ]
+        }
+      ],
+      "hasAuthentication": true,
+      "authorizationChecks": [
+        {
+          "type": "session_check",
+          "location": "Line 2",
+          "details": "import { getServerSession } from \"../../../../lib/session\";"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 33",
+          "details": "const session = getServerSession(request);"
+        },
+        {
+          "type": "session_check",
+          "location": "Line 35",
+          "details": "if (!session) {\r\n    return NextResponse.json(\r\n      { error: \"Unauthorized - Authentication requir"
+        }
+      ],
+      "parameters": [],
+      "middleware": [],
+      "methodDetails": [
+        {
+          "method": "GET",
+          "sinks": [
+            {
+              "type": "user_table_read",
+              "location": "Line 44",
+              "callPath": [
+                "db.user.findMany"
+              ],
+              "isProtected": true
+            }
+          ],
+          "hasAuthentication": true,
+          "authorizationChecks": [
+            {
+              "type": "session_check",
+              "location": "Line 33",
+              "details": "const session = getServerSession(request);"
+            },
+            {
+              "type": "session_check",
+              "location": "Line 35",
+              "details": "if (!session) {\r\n    return NextResponse.json(\r\n      { error: \"Unauthorized - Authentication requir"
             }
           ]
         }

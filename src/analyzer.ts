@@ -17,7 +17,7 @@ export class Analyzer {
   constructor(config: SecurityConfig = {}) {
     this.config = config;
     this.astUtils = new ASTUtils();
-    this.sinkDetector = new SinkDetector(this.astUtils);
+    this.sinkDetector = new SinkDetector(this.astUtils, config);
     this.authAnalyzer = new AuthAnalyzer(config);
     this.controlFlowAnalyzer = new ControlFlowAnalyzer(this.authAnalyzer);
     this.parameterExtractor = new ParameterExtractor(this.astUtils);
@@ -145,15 +145,11 @@ export class Analyzer {
   }
 
   private hasAnyAuthentication(sourceFile: SourceFile): boolean {
-    let hasAuth = false;
-
     sourceFile.forEachDescendant((node) => {
       if (this.authAnalyzer.hasAuthPatternInNode(node)) {
-        hasAuth = true;
         return true;
       }
     });
-
-    return hasAuth;
+    return false;
   }
 }
